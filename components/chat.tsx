@@ -18,6 +18,7 @@ import { toast } from './toast';
 import type { Session } from 'next-auth';
 import { useSearchParams } from 'next/navigation';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
+import { WandSparklesIcon } from 'lucide-react';
 
 export function Chat({
   id,
@@ -43,6 +44,8 @@ export function Chat({
     initialVisibilityType,
   });
 
+  const [isCanvasMode, setIsCanvasMode] = useState(false);
+
   const {
     messages,
     setMessages,
@@ -54,7 +57,7 @@ export function Chat({
     stop,
     reload,
     experimental_resume,
-  } = useChat({
+} = useChat({
     id,
     initialMessages,
     experimental_throttle: 100,
@@ -65,6 +68,7 @@ export function Chat({
       message: body.messages.at(-1),
       selectedChatModel: initialChatModel,
       selectedVisibilityType: visibilityType,
+      isCanvasMode,
     }),
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
@@ -148,6 +152,8 @@ export function Chat({
               setMessages={setMessages}
               append={append}
               selectedVisibilityType={visibilityType}
+              isCanvasMode={isCanvasMode}
+              setIsCanvasMode={setIsCanvasMode}
             />
           )}
         </form>

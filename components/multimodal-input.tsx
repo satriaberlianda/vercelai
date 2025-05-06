@@ -24,7 +24,7 @@ import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, WandSparklesIcon } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { VisibilityType } from './visibility-selector';
 
@@ -42,6 +42,8 @@ function PureMultimodalInput({
   handleSubmit,
   className,
   selectedVisibilityType,
+  isCanvasMode,
+  setIsCanvasMode,
 }: {
   chatId: string;
   input: UseChatHelpers['input'];
@@ -56,6 +58,8 @@ function PureMultimodalInput({
   handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
   selectedVisibilityType: VisibilityType;
+  isCanvasMode: boolean;
+  setIsCanvasMode: Dispatch<SetStateAction<boolean>>;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -291,8 +295,13 @@ function PureMultimodalInput({
         }}
       />
 
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
+      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start items-center gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+        <CanvasButton
+          isCanvasMode={isCanvasMode}
+          setIsCanvasMode={setIsCanvasMode}
+          status={status}
+        />
       </div>
 
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
@@ -318,6 +327,7 @@ export const MultimodalInput = memo(
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
       return false;
+    if (prevProps.isCanvasMode !== nextProps.isCanvasMode) return false;
 
     return true;
   },
@@ -347,6 +357,45 @@ function PureAttachmentsButton({
 }
 
 const AttachmentsButton = memo(PureAttachmentsButton);
+
+function PureCanvasButton({
+  isCanvasMode,
+  setIsCanvasMode,
+  status,
+}: {
+  isCanvasMode: boolean;
+  setIsCanvasMode: Dispatch<SetStateAction<boolean>>;
+  status: UseChatHelpers['status'];
+}) {
+  return (
+    <Button
+      data-testid="canvas-button"
+      className={cx(
+        'rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200',
+        {
+          'bg-primary/20 hover:bg-primary/30 dark:bg-primary/30 dark:hover:bg-primary/40':
+            isCanvasMode,
+        },
+      )}
+      onClick={(event) => {
+        event.preventDefault();
+        setIsCanvasMode((prev) => !prev);
+      }}
+      disabled={status !== 'ready'}
+      variant="ghost"
+      title={isCanvasMode ? 'Disable Canvas Mode' : 'Enable Canvas Mode'}
+    >
+      <WandSparklesIcon size={14} />
+    </Button>
+  );
+}
+
+const CanvasButton = memo(
+  PureCanvasButton,
+  (prevProps, nextProps) =>
+    prevProps.isCanvasMode === nextProps.isCanvasMode &&
+    prevProps.status === nextProps.status,
+);
 
 function PureStopButton({
   stop,

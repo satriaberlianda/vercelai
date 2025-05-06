@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, selectedChatModel, selectedVisibilityType } =
+    const { id, message, selectedChatModel, selectedVisibilityType, isCanvasMode } =
       requestBody;
 
     const session = await auth();
@@ -149,32 +149,46 @@ export async function POST(request: Request) {
 
     const stream = createDataStream({
       execute: (dataStream) => {
+        let activeTools: string[] = [];
+        let toolsForStreamText: any = {};
+        let effectiveCanvasModeActive = false;
+
+        if (selectedChatModel.includes('reasoning')) {
+          // No tools active if model name contains 'reasoning'
+          activeTools = [];
+          toolsForStreamText = {};
+          effectiveCanvasModeActive = false;
+        } else {
+          // Default active tool
+          activeTools = ['getWeather'];
+          toolsForStreamText = {
+            getWeather,
+          };
+          effectiveCanvasModeActive = false; // Default to false, true if canvas tools are added
+
+          // Add canvas tools if canvas mode is active
+          if (isCanvasMode) {
+            activeTools.push('createDocument', 'updateDocument', 'requestSuggestions');
+            toolsForStreamText.createDocument = createDocument({ session, dataStream });
+            toolsForStreamText.updateDocument = updateDocument({ session, dataStream });
+            toolsForStreamText.requestSuggestions = requestSuggestions({
+              session,
+              dataStream,
+            });
+            effectiveCanvasModeActive = true;
+          }
+        }
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints, isCanvasModeActive: effectiveCanvasModeActive }),
           messages,
           temperature: 0.7,
           maxSteps: 5,
-          experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning'
-              ? []
-              : [
-                  //'getWeather',
-                  //'createDocument',
-                  //'updateDocument',
-                  //'requestSuggestions',
-                ],
+          experimental_activeTools: activeTools,
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
-          },
+          tools: toolsForStreamText,
           onFinish: async ({ response }) => {
             if (session.user?.id) {
               try {
