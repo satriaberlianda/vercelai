@@ -41,9 +41,13 @@ function PureSuggestedActions({
   ];
 
   return (
-    <div
+    <motion.div
       data-testid="suggested-actions"
       className="grid sm:grid-cols-2 gap-2 w-full"
+      initial={{ opacity: 0, y: 20 }} // Keep initial animation for appearance
+      animate={{ opacity: 1, y: 0 }}   // Keep animate for appearance
+      exit={{ opacity: 0, y: 20, transition: { duration: 0.3 } }} // Mirror initial y and opacity, match duration
+      transition={{ duration: 0.3 }} // Default transition for appearance
     >
       {suggestedActions.map((suggestedAction, index) => (
         <motion.div
@@ -73,7 +77,7 @@ function PureSuggestedActions({
           </Button>
         </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 

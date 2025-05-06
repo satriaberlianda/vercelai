@@ -64,12 +64,6 @@ function PureMultimodalInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight();
-    }
-  }, []);
-
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -80,7 +74,6 @@ function PureMultimodalInput({
   const resetHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = '98px';
     }
   };
 
@@ -95,11 +88,14 @@ function PureMultimodalInput({
       // Prefer DOM value over localStorage to handle hydration
       const finalValue = domValue || localStorageInput || '';
       setInput(finalValue);
-      adjustHeight();
     }
     // Only run once after hydration
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    adjustHeight();
+  }, [input]);
 
   useEffect(() => {
     setLocalStorageInput(input);
@@ -107,7 +103,6 @@ function PureMultimodalInput({
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
-    adjustHeight();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -224,15 +219,18 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            append={append}
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-          />
-        )}
+      <AnimatePresence>
+        {messages.length === 0 &&
+          attachments.length === 0 &&
+          uploadQueue.length === 0 &&
+          input.length === 0 && (
+            <SuggestedActions
+              append={append}
+              chatId={chatId}
+              selectedVisibilityType={selectedVisibilityType}
+            />
+          )}
+      </AnimatePresence>
 
       <input
         type="file"
@@ -266,54 +264,61 @@ function PureMultimodalInput({
         </div>
       )}
 
-      <Textarea
-        data-testid="multimodal-input"
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cx(
-          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700',
-          className,
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (
-            event.key === 'Enter' &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
+      {/* New wrapper for Textarea and buttons */}
+      <div className="bg-muted rounded-2xl border dark:border-zinc-700 flex flex-col">
+        <Textarea
+          data-testid="multimodal-input"
+          ref={textareaRef}
+          placeholder="Ask a question..."
+          value={input}
+          onChange={handleInput}
+          className={cx(
+            'min-h-0 max-h-36 overflow-y-auto resize-none !text-base bg-transparent border-none rounded-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
+            input.length === 0 && 'min-h-12', // Apply smaller min-height when input is empty (48px)
+            className,
+          )}
+          rows={1} // Start with 1 row, adjustHeight will handle growth.
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              event.key === 'Enter' &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
 
-            if (status !== 'ready') {
-              toast.error('Please wait for the model to finish its response!');
-            } else {
-              submitForm();
+              if (status !== 'ready') {
+                toast.error('Please wait for the model to finish its response!');
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
-
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start items-center gap-1">
-        <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-        <CanvasButton
-          isCanvasMode={isCanvasMode}
-          setIsCanvasMode={setIsCanvasMode}
-          status={status}
+          }}
         />
-      </div>
 
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === 'submitted' ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
-          />
-        )}
+        {/* Container for action buttons, now inside the styled wrapper */}
+        <div className="flex flex-row justify-between items-center px-2 pb-2">
+          <div className="flex flex-row justify-start items-center gap-1">
+            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+            <CanvasButton
+              isCanvasMode={isCanvasMode}
+              setIsCanvasMode={setIsCanvasMode}
+              status={status}
+            />
+          </div>
+
+          <div className="flex flex-row justify-end">
+            {status === 'submitted' ? (
+              <StopButton stop={stop} setMessages={setMessages} />
+            ) : (
+              <SendButton
+                input={input}
+                submitForm={submitForm}
+                uploadQueue={uploadQueue}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -343,7 +348,7 @@ function PureAttachmentsButton({
   return (
     <Button
       data-testid="attachments-button"
-      className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
+      className="rounded-full p-2.5 h-fit border dark:border-zinc-700"
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
@@ -371,10 +376,9 @@ function PureCanvasButton({
     <Button
       data-testid="canvas-button"
       className={cx(
-        'rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200',
+        'rounded-full px-3 py-[7px] h-fit border dark:border-zinc-700 flex items-center gap-1.5',
         {
-          'bg-primary/20 hover:bg-primary/30 dark:bg-primary/30 dark:hover:bg-primary/40':
-            isCanvasMode,
+          'bg-primary/20 dark:bg-primary/30': isCanvasMode,
         },
       )}
       onClick={(event) => {
@@ -386,6 +390,7 @@ function PureCanvasButton({
       title={isCanvasMode ? 'Disable Canvas Mode' : 'Enable Canvas Mode'}
     >
       <WandSparklesIcon size={14} />
+      <span>Canvas</span>
     </Button>
   );
 }

@@ -43,10 +43,11 @@ export interface RequestHints {
 }
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `
- When the user asks for weather information,
- you MUST ask the user for their location, 
- if user cannot provide latitude and longitude,
- try to get latitude and longitude before attempting to use the getWeather tool.`;
+ When the user asks for weather,
+ you MUST ask for their city or region.
+ Mention that latitude/longitude provides more accuracy.
+ If the user doesn't provide lat/long, try to find it from their location
+ before using the getWeather tool.`;
 
 export const systemPrompt = ({
   selectedChatModel,

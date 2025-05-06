@@ -24,10 +24,8 @@ export async function generateTitleFromUserMessage({
     model: myProvider.languageModel('title-model'),
     temperature: 1,
     system: `\n
-    - you will generate a short title based on the first message a user begins a conversation with
-    - ensure it is not more than 80 characters long
-    - the title should be a summary of the user's message
-    - do not use quotes or colons`,
+    Create a concise, 2-3 word title for the chat history, in the given language.
+    Avoid quotation marks or special formatting. RESPOND ONLY WITH THE TITLE TEXT`,
     prompt: JSON.stringify(message),
   });
 
