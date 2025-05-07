@@ -59,6 +59,7 @@ function PureSuggestedActions({
           className={index > 1 ? 'hidden sm:block' : 'block'}
         >
           <Button
+            type="button" // Add this line
             variant="ghost"
             onClick={async () => {
               window.history.replaceState({}, '', `/chat/${chatId}`);

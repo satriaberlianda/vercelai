@@ -273,8 +273,7 @@ function PureMultimodalInput({
           value={input}
           onChange={handleInput}
           className={cx(
-            'min-h-0 max-h-36 overflow-y-auto resize-none !text-base bg-transparent border-none rounded-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
-            input.length === 0 && 'min-h-12', // Apply smaller min-height when input is empty (48px)
+            'min-h-12 max-h-36 overflow-y-auto resize-none !text-base bg-transparent border-none rounded-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
             className,
           )}
           rows={1} // Start with 1 row, adjustHeight will handle growth.

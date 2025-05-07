@@ -20,6 +20,16 @@
     .text-balance {
         text-wrap: balance;
     }
+
+    /* Utility class untuk menyembunyikan scrollbar */
+    .hide-scrollbar {
+        -ms-overflow-style: none;  /* untuk Internet Explorer dan Edge */
+        scrollbar-width: none;     /* untuk Firefox */
+    }
+    
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;  /* untuk Chrome, Safari, dan Opera */
+    }
 }
 
 @layer base {
@@ -102,6 +112,29 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/* Media query untuk perangkat mobile */
+@media (max-width: 768px) {
+  /* Sembunyikan scrollbar pada body untuk tampilan mobile */
+  body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  body::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Sembunyikan scrollbar pada semua elemen yang bisa di-scroll pada mobile */
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  *::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .skeleton {

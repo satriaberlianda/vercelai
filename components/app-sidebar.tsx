@@ -12,11 +12,11 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
+  SidebarSeparator,
   useSidebar,
+  SidebarGroup,
+  SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
@@ -25,39 +25,27 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
-        <SidebarMenu>
-          <div className="flex flex-row justify-between items-center">
-            <Link
-              href="/"
-              onClick={() => {
-                setOpenMobile(false);
-              }}
-              className="flex flex-row gap-3 items-center"
-            >
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Llencie
-              </span>
-            </Link>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  className="p-2 h-fit"
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push('/');
-                    router.refresh();
-                  }}
-                >
-                  <PlusIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent align="end">New Chat</TooltipContent>
-            </Tooltip>
-          </div>
-        </SidebarMenu>
+        <span className="text-lg font-semibold pl-2 mt-1">
+          Llencie
+        </span>
       </SidebarHeader>
+      <SidebarSeparator className="mt-1" />
+      <SidebarGroup className="mt-2">
+        <SidebarMenuButton
+          onClick={() => {
+            setOpenMobile(false);
+            router.push('/');
+            router.refresh();
+          }}
+          tooltip="New Chat"
+          className="w-full justify-start"
+        >
+          <span className="mr-0.5">
+            <PlusIcon size={16} />
+          </span>
+          New Chat
+        </SidebarMenuButton>
+      </SidebarGroup>
       <SidebarContent>
         <SidebarHistory user={user} />
       </SidebarContent>

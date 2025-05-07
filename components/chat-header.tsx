@@ -7,9 +7,9 @@ import { useWindowSize } from 'usehooks-ts';
 import { ModelSelector } from '@/components/model-selector';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, VercelIcon } from './icons';
+import { PlusIcon } from './icons'; // Removed VercelIcon
 import { useSidebar } from './ui/sidebar';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react'; // Added useEffect, useState
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import type { Session } from 'next-auth';
@@ -25,18 +25,36 @@ function PureChatHeader({
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  session: Session;
+  session: Session | null; // Updated session type to allow null
 }) {
   const router = useRouter();
   const { open } = useSidebar();
-
   const { width: windowWidth } = useWindowSize();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isGuestOrNotLoggedIn = !session || session.user?.type === 'guest';
+
+  // Determine currentIsMobile based on mounted status to prevent hydration mismatch
+  // On SSR or before client mount, assume isMobile is true,
+  // as useWindowSize typically returns 0 width on SSR, making (0 < 768) true.
+  const currentIsMobile = !mounted ? true : windowWidth < 768;
+
+  // Show button if:
+  // 1. Not (currentIsMobile AND Guest/Not Logged In)
+  // AND
+  // 2. (Sidebar is closed OR it's currentIsMobile)
+  const showNewChatButton =
+    !(currentIsMobile && isGuestOrNotLoggedIn) && (!open || currentIsMobile);
 
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center px-2 md:px-2 gap-2">
       <SidebarToggle />
 
-      {(!open || windowWidth < 768) && (
+      {showNewChatButton && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -55,7 +73,7 @@ function PureChatHeader({
         </Tooltip>
       )}
 
-      {!isReadonly && (
+      {!isReadonly && session && (
         <ModelSelector
           session={session}
           selectedModelId={selectedModelId}
@@ -71,22 +89,34 @@ function PureChatHeader({
         />
       )}
 
-      <Button
-        className="bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900 hidden md:flex py-1.5 px-2 h-fit md:h-[34px] order-4 md:ml-auto"
-        asChild
-      >
-        <Link
-          href={`https://vercel.com/new/clone?repository-url=https://github.com/vercel/ai-chatbot&env=AUTH_SECRET&envDescription=Learn more about how to get the API Keys for the application&envLink=https://github.com/vercel/ai-chatbot/blob/main/.env.example&demo-title=AI Chatbot&demo-description=An Open-Source AI Chatbot Template Built With Next.js and the AI SDK by Vercel.&demo-url=https://chat.vercel.ai&products=[{"type":"integration","protocol":"ai","productSlug":"grok","integrationSlug":"xai"},{"type":"integration","protocol":"storage","productSlug":"neon","integrationSlug":"neon"},{"type":"blob"}]`}
-          target="_noblank"
-        >
-          <VercelIcon size={16} />
-          Deploy with Vercel
-        </Link>
-      </Button>
+      {session && session.user?.type === 'guest' && (
+        <div className="flex gap-2 ml-auto order-4">
+          <Button
+            asChild
+            variant="outline"
+            className="px-3 h-[34px] border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          >
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button
+            asChild
+            className="px-3 h-[34px] bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Link href="/register">Sign Up</Link>
+          </Button>
+        </div>
+      )}
     </header>
   );
 }
 
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return prevProps.selectedModelId === nextProps.selectedModelId;
+  return (
+    prevProps.chatId === nextProps.chatId &&
+    prevProps.selectedModelId === nextProps.selectedModelId &&
+    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.session?.user?.id === nextProps.session?.user?.id &&
+    prevProps.session?.user?.type === nextProps.session?.user?.type
+  );
 });

@@ -175,6 +175,8 @@ export function Chat({
         votes={votes}
         isReadonly={isReadonly}
         selectedVisibilityType={visibilityType}
+        isCanvasMode={isCanvasMode}
+        setIsCanvasMode={setIsCanvasMode}
       />
     </>
   );

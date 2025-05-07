@@ -13,6 +13,22 @@ const TITLE_MODEL_NAME = process.env.TITLE_MODEL;
 const ARTIFACT_MODEL_NAME = process.env.ARTIFACT_MODEL;
 const IMAGE_MODEL_NAME = process.env.IMAGE_MODEL;
 
+if (!CHAT_MODEL_NAME) {
+  throw new Error("Missing environment variable: CHAT_MODEL");
+}
+if (!REASONING_MODEL_NAME) {
+  throw new Error("Missing environment variable: REASONING_MODEL");
+}
+if (!TITLE_MODEL_NAME) {
+  throw new Error("Missing environment variable: TITLE_MODEL");
+}
+if (!ARTIFACT_MODEL_NAME) {
+  throw new Error("Missing environment variable: ARTIFACT_MODEL");
+}
+if (!IMAGE_MODEL_NAME) {
+  throw new Error("Missing environment variable: IMAGE_MODEL");
+}
+
 const CHAT_ID = 'chat-model';
 const REASONING_ID = 'chat-model-reasoning';
 const TITLE_ID = 'title-model';

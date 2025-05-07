@@ -68,6 +68,8 @@ function PureArtifact({
   votes,
   isReadonly,
   selectedVisibilityType,
+  isCanvasMode,
+  setIsCanvasMode,
 }: {
   chatId: string;
   input: string;
@@ -84,6 +86,8 @@ function PureArtifact({
   reload: UseChatHelpers['reload'];
   isReadonly: boolean;
   selectedVisibilityType: VisibilityType;
+  isCanvasMode: boolean;
+  setIsCanvasMode: Dispatch<SetStateAction<boolean>>;
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
 
@@ -339,6 +343,8 @@ function PureArtifact({
                     className="bg-background dark:bg-muted"
                     setMessages={setMessages}
                     selectedVisibilityType={selectedVisibilityType}
+                    isCanvasMode={isCanvasMode}
+                    setIsCanvasMode={setIsCanvasMode}
                   />
                 </form>
               </div>
@@ -509,6 +515,7 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (!equal(prevProps.messages, nextProps.messages.length)) return false;
   if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
     return false;
+  if (prevProps.isCanvasMode !== nextProps.isCanvasMode) return false;
 
   return true;
 });

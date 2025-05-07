@@ -18,7 +18,7 @@ import {
   saveMessages,
 } from '@/lib/db/queries';
 import { generateUUID, getTrailingMessageId } from '@/lib/utils';
-import { generateTitleFromUserMessage } from '../../actions';
+import { generateTitleFromUserMessage, generateAndUpdateChatTitle } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
@@ -27,7 +27,6 @@ import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
-import { geolocation } from '@vercel/functions';
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -95,21 +94,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const chat = await getChatById({ id });
+    const chatFromDB = await getChatById({ id });
+    let isNewChat = false;
 
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-
+    if (!chatFromDB) {
+      isNewChat = true;
+      // Save with an empty title initially.
+      // The actual title will be generated and set in the onFinish callback.
       await saveChat({
         id,
         userId: session.user.id,
-        title,
+        title: 'New Chat', // Save with an empty title
         visibility: selectedVisibilityType,
       });
     } else {
-      if (chat.userId !== session.user.id) {
+      if (chatFromDB.userId !== session.user.id) {
         return new Response('Forbidden', { status: 403 });
       }
     }
@@ -122,13 +121,11 @@ export async function POST(request: Request) {
       message,
     });
 
-    const { longitude, latitude, city, country } = geolocation(request);
-
     const requestHints: RequestHints = {
-      longitude,
-      latitude,
-      city,
-      country,
+      longitude: undefined,
+      latitude: undefined,
+      city: undefined,
+      country: undefined,
     };
 
     await saveMessages({
@@ -154,19 +151,16 @@ export async function POST(request: Request) {
         let effectiveCanvasModeActive = false;
 
         if (selectedChatModel.includes('reasoning')) {
-          // No tools active if model name contains 'reasoning'
           activeTools = [];
           toolsForStreamText = {};
           effectiveCanvasModeActive = false;
         } else {
-          // Default active tool
           activeTools = ['getWeather'];
           toolsForStreamText = {
             getWeather,
           };
-          effectiveCanvasModeActive = false; // Default to false, true if canvas tools are added
+          effectiveCanvasModeActive = false;
 
-          // Add canvas tools if canvas mode is active
           if (isCanvasMode) {
             activeTools.push('createDocument', 'updateDocument', 'requestSuggestions');
             toolsForStreamText.createDocument = createDocument({ session, dataStream });
@@ -194,7 +188,7 @@ export async function POST(request: Request) {
               try {
                 const assistantId = getTrailingMessageId({
                   messages: response.messages.filter(
-                    (message) => message.role === 'assistant',
+                    (msg) => msg.role === 'assistant',
                   ),
                 });
 
@@ -220,8 +214,34 @@ export async function POST(request: Request) {
                     },
                   ],
                 });
-              } catch (_) {
-                console.error('Failed to save chat');
+
+                if (isNewChat) {
+                  const userMessageContent = message.content;
+
+                  let assistantContentForTitle: string;
+                  if (Array.isArray(assistantMessage.parts)) {
+                    assistantContentForTitle = assistantMessage.parts
+                      .filter(part => part.type === 'text')
+                      .map(part => (part as { type: 'text'; text: string }).text)
+                      .join('');
+                  } else if (typeof assistantMessage.content === 'string') {
+                    assistantContentForTitle = assistantMessage.content;
+                  } else {
+                    assistantContentForTitle = '';
+                  }
+
+                  if (userMessageContent && assistantContentForTitle) {
+                    await generateAndUpdateChatTitle({
+                      chatId: id,
+                      userMessageContent: userMessageContent,
+                      assistantMessageContent: assistantContentForTitle,
+                    });
+                  } else {
+                    console.warn(`Skipping title generation for chat ${id} due to missing content.`);
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to save chat or update title:', error);
               }
             }
           },

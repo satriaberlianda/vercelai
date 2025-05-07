@@ -39,8 +39,8 @@ export function PureMessageActions({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="py-1 px-2 h-fit text-muted-foreground"
-              variant="outline"
+              className="py-1 px-2 h-fit text-muted-foreground bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              variant="ghost"
               onClick={async () => {
                 const textFromParts = message.parts
                   ?.filter((part) => part.type === 'text')
@@ -67,9 +67,9 @@ export function PureMessageActions({
           <TooltipTrigger asChild>
             <Button
               data-testid="message-upvote"
-              className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
+              className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
               disabled={vote?.isUpvoted}
-              variant="outline"
+              variant="ghost"
               onClick={async () => {
                 const upvote = fetch('/api/vote', {
                   method: 'PATCH',
@@ -120,8 +120,8 @@ export function PureMessageActions({
           <TooltipTrigger asChild>
             <Button
               data-testid="message-downvote"
-              className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
-              variant="outline"
+              className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              variant="ghost"
               disabled={vote && !vote.isUpvoted}
               onClick={async () => {
                 const downvote = fetch('/api/vote', {

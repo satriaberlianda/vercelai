@@ -1,10 +1,11 @@
 'use server';
 
-import { generateText, type UIMessage } from 'ai';
+import { generateText } from 'ai'; // UIMessage is no longer needed for generateTitleFromUserMessage
 import { cookies } from 'next/headers';
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
+  updateChatTitleById, // Import the new query
   updateChatVisiblityById,
 } from '@/lib/db/queries';
 import type { VisibilityType } from '@/components/visibility-selector';
@@ -16,20 +17,55 @@ export async function saveChatModelAsCookie(model: string) {
 }
 
 export async function generateTitleFromUserMessage({
-  message,
+  userContent,
+  assistantContent,
 }: {
-  message: UIMessage;
+  userContent: string;
+  assistantContent: string;
 }) {
   const { text: title } = await generateText({
     model: myProvider.languageModel('title-model'),
     temperature: 1,
-    system: `\n
-    Create a concise, 2-3 word title for the chat history, in the given language.
-    Avoid quotation marks or special formatting. RESPOND ONLY WITH THE TITLE TEXT`,
-    prompt: JSON.stringify(message),
+    system: `
+    ### Task:
+    Generate a very concise and specific title (2-4 words maximum) for the following conversation snippet.
+    The title must be in the same language as the conversation.
+    Focus on the main subject or keywords of the conversation.
+    Avoid generic phrases, questions, or conversational filler.
+    Do NOT use quotation marks or any special formatting.
+    RESPOND ONLY WITH THE TITLE TEXT.
+    ### Examples:
+    - Python Code Help
+    - Cat Image Request
+    - Recipe: Chocolate Chip
+    - Music Evolution
+    - Productivity Tips
+    - JavaScript Debugging`,
+    prompt: `User: ${userContent}\nAssistant: ${assistantContent}`,
   });
 
   return title;
+}
+
+export async function generateAndUpdateChatTitle({
+  chatId,
+  userMessageContent,
+  assistantMessageContent,
+}: {
+  chatId: string;
+  userMessageContent: string;
+  assistantMessageContent: string;
+}) {
+  try {
+    const title = await generateTitleFromUserMessage({
+      userContent: userMessageContent,
+      assistantContent: assistantMessageContent,
+    });
+    await updateChatTitleById({ chatId, title });
+  } catch (error) {
+    console.error('Failed to generate and update chat title:', error);
+    // Optionally, handle or log this error more gracefully
+  }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
