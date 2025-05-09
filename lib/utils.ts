@@ -74,6 +74,9 @@ export function getTrailingMessageId({
   return trailingMessage.id;
 }
 
-export function sanitizeText(text: string) {
-  return text.replace('<has_function_call>', '');
+export function sanitizeText(text: string): string {
+  const safe = text.replace('<has_function_call>', '');
+
+  // replace three or more consecutive newlines with a Markdown separator, ensuring blank lines before/after
+  return safe.replace(/\n{3,}/g, '\n\n---\n\n');
 }

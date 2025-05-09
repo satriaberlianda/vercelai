@@ -7,8 +7,8 @@ import './globals.css';
 import { SessionProvider } from 'next-auth/react';
 
 export const metadata: Metadata = {
-  title: 'Llencie AI',
-  description: 'Llencie AI Chatbot',
+  title: 'Llencie',
+  description: 'Llencie Assistant',
 };
 
 export const viewport = {

@@ -12,7 +12,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarSeparator,
   useSidebar,
   SidebarGroup,
   SidebarMenuButton,
@@ -23,25 +22,25 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
 
   return (
-    <Sidebar className="group-data-[side=left]:border-r-0">
-      <SidebarHeader>
-        <span className="text-lg font-semibold pl-2 mt-1">
+    <Sidebar className="group-data-[side=left]:border-r-0 shadow-md">
+      <SidebarHeader className="border-b-0 shadow-none">
+        <span className="text-xl font-bold pl-1 tracking-tight">
           Llencie
         </span>
       </SidebarHeader>
-      <SidebarSeparator className="mt-1" />
-      <SidebarGroup className="mt-2">
+      <SidebarGroup className="pt-1.5 pb-2">
         <SidebarMenuButton
+          variant="outline"
           onClick={() => {
             setOpenMobile(false);
             router.push('/');
             router.refresh();
           }}
           tooltip="New Chat"
-          className="w-full justify-start"
+          className="w-full justify-start font-medium"
         >
-          <span className="mr-0.5">
-            <PlusIcon size={16} />
+          <span className="mr-1.5">
+            <PlusIcon size={18} />
           </span>
           New Chat
         </SidebarMenuButton>
@@ -49,7 +48,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarContent>
         <SidebarHistory user={user} />
       </SidebarContent>
-      <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border pt-2">
+        {user && <SidebarUserNav user={user} />}
+      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -93,14 +93,14 @@ function PureChatHeader({
         <div className="flex gap-2 ml-auto order-4">
           <Button
             asChild
-            variant="outline"
-            className="px-3 h-[34px] border-primary text-primary hover:bg-primary/10 hover:text-primary"
+            className="px-3 h-[34px] bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Link href="/login">Login</Link>
           </Button>
           <Button
             asChild
-            className="px-3 h-[34px] bg-primary text-primary-foreground hover:bg-primary/90"
+            variant="outline"
+            className="px-3 h-[34px] border-primary text-primary hover:bg-primary/10 hover:text-primary"
           >
             <Link href="/register">Sign Up</Link>
           </Button>
